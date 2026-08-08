@@ -1,0 +1,4 @@
+id,face,coupon,maturity,freq,position
+UST2Y_A,100,0.0400,2028-09-15,2,1
+UST5Y_B,100,0.0425,2031-09-15,2,1
+UST10Y_C,100,0.0450,2036-09-15,2,1

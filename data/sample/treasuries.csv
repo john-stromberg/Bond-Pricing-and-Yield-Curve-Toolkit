@@ -1,0 +1,7 @@
+tenor_years,instrument_type,coupon,market_yield
+0.5,bill,0.0000,0.0420
+1.0,note,0.0350,0.0410
+2.0,note,0.0375,0.0405
+5.0,note,0.0400,0.0400
+10.0,bond,0.0425,0.0415
+30.0,bond,0.0450,0.0430
