@@ -1,6 +1,6 @@
 # Bond Pricing & Yield Curve Toolkit
 
-Fixed-income analytics toolkit focused on recruiter-visible investment analysis deliverables: bond pricing, Treasury spot/forward curve construction, DV01, and key-rate duration buckets.
+Fixed-income analytics toolkit: bond pricing, Treasury spot/forward curve construction, DV01, and key-rate duration buckets.
 
 ## Why this project matters
 
@@ -31,6 +31,10 @@ This repository demonstrates practical fixed-income skills used in rates and cre
 - `data/sample/` sample treasury and portfolio inputs
 - `notebooks/` walkthrough notebooks
 - `tests/` pricing, curve, risk, and CLI tests
+
+## Personal Learning
+
+- [Learning Checklist](./LEARNING_CHECKLIST.md)
 
 ## Quickstart
 

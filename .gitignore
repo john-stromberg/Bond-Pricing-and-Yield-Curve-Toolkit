@@ -12,6 +12,7 @@ venv/
 .env
 .DS_Store
 .vscode/
+.vs/
 .idea/
 .ipynb_checkpoints/
 poetry.lock
