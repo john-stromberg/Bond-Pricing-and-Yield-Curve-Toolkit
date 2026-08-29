@@ -2,6 +2,10 @@
 
 Fixed-income analytics toolkit for bond pricing, Treasury spot/forward curve construction, and portfolio risk metrics (DV01 + key-rate duration).
 
+## Analytical question
+
+How do changes in rates and curve shape flow through bond valuation and into portfolio-level risk metrics that inform hedge sizing?
+
 ## What you can do with this toolkit
 
 - Price a bond from yield or infer yield from clean price
@@ -106,6 +110,20 @@ poetry run fitool scenario-risk --portfolio data/sample/portfolio.csv --curve ou
 - `notebooks/03_dv01_krd_scenarios.ipynb`
   - portfolio DV01/KRD and scenario comparison under curve shifts
 
+## Method vs alternatives
+
+- **Method used:** simplified bootstrap + nearest-bucket KRD for transparency and fast iteration.
+- **Alternative:** full market-convention bootstrap with instrument-level key-rate bumping.
+- **Tradeoff:** current method is easier to explain and audit; alternative is more precise but more complex.
+
+## Assumptions and limitations
+
+| Assumption | Why it was chosen | Limitation impact | Next enhancement |
+|---|---|---|---|
+| Simplified curve bootstrap from input yields | Keeps workflow concise | Less accurate vs full convention bootstrapping | Add full instrument bootstrapping by tenor type |
+| Nearest-bucket KRD allocation | Easy interpretation | Bucket granularity may hide slope effects | Add distributed KRD interpolation across adjacent buckets |
+| Parallel shift scenario in CLI | Clear first-pass stress test | Misses non-parallel curve behavior | Add twist/steepener/flattener scenario file support |
+
 ## Analytical use cases
 
 - **Valuation sensitivity:** explain how rate regimes affect bond pricing and risk metrics.
@@ -138,6 +156,13 @@ poetry run fitool scenario-risk --portfolio data/sample/portfolio.csv --curve ou
 ## Personal learning
 
 - [Learning Checklist](./LEARNING_CHECKLIST.md)
+
+## Decision memo template (for each run)
+
+1. **Question:** What exposure or valuation question is being tested?
+2. **Evidence:** Which output table/chart supports the conclusion?
+3. **Interpretation:** What changed and why does it matter?
+4. **Action:** What hedge, rebalance, or monitoring step follows?
 
 ## Notes
 
