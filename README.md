@@ -1,78 +1,119 @@
 # Bond Pricing & Yield Curve Toolkit
 
-Fixed-income analytics toolkit: bond pricing, Treasury spot/forward curve construction, DV01, and key-rate duration buckets.
+Fixed-income analytics toolkit for bond pricing, Treasury spot/forward curve construction, and portfolio risk metrics (DV01 + key-rate duration).
 
-## Why this project matters
+## What you can do with this toolkit
 
-This repository demonstrates practical fixed-income skills used in rates and credit workflows: valuation, term-structure construction, and portfolio risk decomposition.
+- Price a bond from yield or infer yield from clean price
+- Compute clean/dirty price, accrued, duration, convexity, DV01
+- Build a simplified Treasury spot curve and derived forward curve
+- Run portfolio DV01 and KRD (2Y/5Y/10Y/30Y) reports from CSV inputs
+- Use notebooks for full end-to-end walkthroughs
 
-## MVP Features
+## Project structure
 
-- Bond pricing via yield or clean price input
-- Clean price, dirty price, accrued interest, YTM, duration, convexity, and DV01
-- Treasury spot curve build from market yield inputs
-- Forward curve derivation across tenor segments
-- Portfolio DV01 and key-rate duration (2Y/5Y/10Y/30Y) report
-- CLI + sample datasets + starter notebooks + tests + CI
+- `src/fixed_income_toolkit/pricing.py` bond pricing and risk measures
+- `src/fixed_income_toolkit/curve.py` spot and forward curve logic
+- `src/fixed_income_toolkit/risk.py` portfolio DV01 and KRD aggregation
+- `src/fixed_income_toolkit/io.py` CSV input/output helpers
+- `cli/main.py` command-line interface (`fitool`)
+- `data/sample/` ready-to-run datasets
+- `notebooks/` guided examples
 
-## Tech Stack
+## Setup
 
-- Python 3.11
-- QuantLib (with fallback to pure Python analytics)
-- pandas, numpy, scipy
-- Typer + Rich (CLI)
-- pytest, ruff, black
-- GitHub Actions CI
-
-## Repository Structure
-
-- `src/fixed_income_toolkit/` core analytics modules
-- `cli/main.py` command-line entrypoint
-- `data/sample/` sample treasury and portfolio inputs
-- `notebooks/` walkthrough notebooks
-- `tests/` pricing, curve, risk, and CLI tests
-
-## Personal Learning
-
-- [Learning Checklist](./LEARNING_CHECKLIST.md)
-
-## Quickstart
-
-1. Install dependencies
+1. Install dependencies:
    - `poetry install`
+2. Optional: verify environment:
+   - `poetry run pytest`
 
-2. Price a bond
-   - `poetry run fitool price-bond --coupon 0.045 --maturity 2032-06-30 --settlement 2026-09-15 --freq 2 --ytm 0.041`
+## CLI usage guide
 
-3. Build spot and forward curves
-   - `poetry run fitool build-curve --input data/sample/treasuries.csv --out-spot outputs/spot_curve.csv --out-fwd outputs/forward_curve.csv`
+### 1) Price a single bond
 
-4. Generate portfolio risk report
-   - `poetry run fitool risk-report --portfolio data/sample/portfolio.csv --curve outputs/spot_curve.csv --settlement 2026-09-15 --output outputs/risk_report.csv`
+```bash
+poetry run fitool price-bond --coupon 0.045 --maturity 2032-06-30 --settlement 2026-09-15 --freq 2 --ytm 0.041
+```
 
-## Sample Input Schemas
+Use when you want pricing/risk for one instrument.
 
-### Treasuries (`data/sample/treasuries.csv`)
+Key inputs:
+- `--coupon` annual coupon rate (decimal)
+- `--maturity` maturity date `YYYY-MM-DD`
+- `--settlement` settlement date `YYYY-MM-DD`
+- `--freq` coupon frequency (`1|2|4`)
+- one of:
+  - `--ytm` to price from yield
+  - `--clean-price` to solve implied yield
+
+### 2) Build spot and forward curves
+
+```bash
+poetry run fitool build-curve --input data/sample/treasuries.csv --out-spot outputs/spot_curve.csv --out-fwd outputs/forward_curve.csv
+```
+
+Use when you need discount/forward inputs for downstream risk analysis.
+
+Outputs:
+- `spot_curve.csv`: tenor, zero rate, discount factor
+- `forward_curve.csv`: start tenor, end tenor, forward rate
+
+### 3) Run portfolio risk report
+
+```bash
+poetry run fitool risk-report --portfolio data/sample/portfolio.csv --curve outputs/spot_curve.csv --settlement 2026-09-15 --output outputs/risk_report.csv
+```
+
+Use when you want instrument-level and aggregated portfolio risk under the curve.
+
+Output includes:
+- `dv01` per instrument
+- `krd_2y`, `krd_5y`, `krd_10y`, `krd_30y` bucket attribution
+
+## Typical workflow (recommended)
+
+1. Build curve from Treasury data
+2. Run portfolio risk report on that curve
+3. Use notebook 03 to compare shifted-curve scenarios
+
+In commands:
+
+```bash
+poetry run fitool build-curve --input data/sample/treasuries.csv --out-spot outputs/spot_curve.csv --out-fwd outputs/forward_curve.csv
+poetry run fitool risk-report --portfolio data/sample/portfolio.csv --curve outputs/spot_curve.csv --settlement 2026-09-15 --output outputs/risk_report.csv
+```
+
+## Notebook guide
+
+- `notebooks/01_pricing_basics.ipynb`
+  - price-yield sensitivity, DV01 behavior, implied yield from clean price
+- `notebooks/02_curve_bootstrap_forward.ipynb`
+  - load Treasury data, build spot/forward curves, export curve files
+- `notebooks/03_dv01_krd_scenarios.ipynb`
+  - portfolio DV01/KRD and scenario comparison under curve shifts
+
+## Input schemas
+
+### `data/sample/treasuries.csv`
 - `tenor_years`
 - `instrument_type` (`bill`, `note`, `bond`)
 - `coupon`
 - `market_yield`
 
-### Portfolio (`data/sample/portfolio.csv`)
+### `data/sample/portfolio.csv`
 - `id`
 - `face`
 - `coupon`
-- `maturity` (YYYY-MM-DD)
+- `maturity` (`YYYY-MM-DD`)
 - `freq`
 - `position`
 
-## Validation
+## Personal learning
 
-- Run tests: `poetry run pytest`
-- Lint checks: `poetry run ruff check .` and `poetry run black --check .`
+- [Learning Checklist](./LEARNING_CHECKLIST.md)
 
-## Notes and assumptions
+## Notes
 
-- Curve construction is simplified for portfolio demo clarity.
-- KRD uses nearest-bucket allocation for transparent exposure reporting.
-- QuantLib is preferred when available; fallback logic supports environments without it.
+- Curve construction is intentionally simplified for transparency.
+- KRD currently maps each bond to the nearest bucket.
+- QuantLib is used when available; fallback analytics are included.
