@@ -4,7 +4,10 @@ version = "0.1.0"
 description = "Fixed income toolkit for bond pricing, curve bootstrapping, and risk analytics."
 authors = ["Portfolio Builder <you@example.com>"]
 readme = "README.md"
-packages = [{ include = "fixed_income_toolkit", from = "src" }]
+packages = [
+    { include = "fixed_income_toolkit", from = "src" },
+    { include = "cli" },
+]
 
 [tool.poetry.dependencies]
 python = "^3.11"
@@ -13,6 +16,7 @@ pandas = "^2.2"
 scipy = "^1.13"
 QuantLib = "^1.36"
 typer = "^0.12"
+click = "<8.2"
 rich = "^13.7"
 plotly = "^5.22"
 matplotlib = "^3.9"

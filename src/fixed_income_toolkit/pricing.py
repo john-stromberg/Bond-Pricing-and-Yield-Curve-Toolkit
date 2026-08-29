@@ -148,9 +148,14 @@ def yield_from_clean_price(spec: BondSpec, clean_price: float) -> float:
 
     bond, settlement_date, day_counter, frequency = _build_bond(spec)
     compounding = ql.Compounded
+    price = (
+        ql.BondPrice(clean_price, ql.BondPrice.Clean)
+        if hasattr(ql, "BondPrice")
+        else clean_price
+    )
     return float(
         ql.BondFunctions.bondYield(
-            bond, clean_price, day_counter, compounding, frequency, settlement_date
+            bond, price, day_counter, compounding, frequency, settlement_date
         )
     )
 
