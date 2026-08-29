@@ -70,6 +70,19 @@ Output includes:
 - `dv01` per instrument
 - `krd_2y`, `krd_5y`, `krd_10y`, `krd_30y` bucket attribution
 
+### 4) Run parallel-shift scenario risk (notebook-aligned)
+
+```bash
+poetry run fitool scenario-risk --portfolio data/sample/portfolio.csv --curve outputs/spot_curve.csv --settlement 2026-09-15 --output outputs/scenario_risk_report.csv --shock-bps 25
+```
+
+Use when you want the same base/up/down parallel-shift comparison used in Notebook 03.
+
+Output includes:
+- `scenario` (`base`, `up_shock`, `down_shock`)
+- `curve_shift_bps`
+- `total_dv01`, `krd_2y`, `krd_5y`, `krd_10y`, `krd_30y`
+
 ## Typical workflow (recommended)
 
 1. Build curve from Treasury data
@@ -81,6 +94,7 @@ In commands:
 ```bash
 poetry run fitool build-curve --input data/sample/treasuries.csv --out-spot outputs/spot_curve.csv --out-fwd outputs/forward_curve.csv
 poetry run fitool risk-report --portfolio data/sample/portfolio.csv --curve outputs/spot_curve.csv --settlement 2026-09-15 --output outputs/risk_report.csv
+poetry run fitool scenario-risk --portfolio data/sample/portfolio.csv --curve outputs/spot_curve.csv --settlement 2026-09-15 --output outputs/scenario_risk_report.csv --shock-bps 25
 ```
 
 ## Notebook guide
@@ -91,6 +105,19 @@ poetry run fitool risk-report --portfolio data/sample/portfolio.csv --curve outp
   - load Treasury data, build spot/forward curves, export curve files
 - `notebooks/03_dv01_krd_scenarios.ipynb`
   - portfolio DV01/KRD and scenario comparison under curve shifts
+
+## Analytical use cases
+
+- **Valuation sensitivity:** explain how rate regimes affect bond pricing and risk metrics.
+- **Term-structure diagnostics:** compare spot and forward views to discuss curve shape and implied expectations.
+- **Portfolio risk decomposition:** identify DV01/KRD concentration and scenario sensitivity by tenor bucket.
+
+## Decision-ready outputs
+
+- `outputs/spot_curve.csv` and `outputs/forward_curve.csv` for downstream risk workflows.
+- `outputs/risk_report.csv` for instrument-level DV01/KRD review.
+- `outputs/scenario_risk_report.csv` for base/up/down shift comparison.
+- Notebook scenario tables/charts for quick what-if analysis and hedge discussion.
 
 ## Input schemas
 

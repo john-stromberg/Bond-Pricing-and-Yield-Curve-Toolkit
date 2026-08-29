@@ -25,6 +25,23 @@ def _nearest_bucket(tenor: float, buckets: list[float]) -> float:
     return min(buckets, key=lambda b: abs(tenor - b))
 
 
+def shift_spot_curve_parallel(spot_curve: list[CurvePoint], shift_bps: float) -> list[CurvePoint]:
+    shift = shift_bps / 10000.0
+    shifted: list[CurvePoint] = []
+    for point in spot_curve:
+        zero_rate = max(0.0, point.zero_rate + shift)
+        frequency = 2
+        discount_factor = (1.0 + zero_rate / frequency) ** (-frequency * point.tenor_years)
+        shifted.append(
+            CurvePoint(
+                tenor_years=point.tenor_years,
+                zero_rate=float(zero_rate),
+                discount_factor=float(discount_factor),
+            )
+        )
+    return shifted
+
+
 def risk_for_bond(spec: BondSpec, spot_curve: list[CurvePoint], buckets: list[float] | None = None) -> RiskRow:
     selected_buckets = buckets or DEFAULT_KRD_BUCKETS
     tenor = _years_to_maturity(spec.settlement, spec.maturity)
@@ -62,3 +79,26 @@ def portfolio_risk_report(
         total_krd_30y=float(sum(r.krd_30y for r in rows)),
     )
     return rows, summary
+
+
+def scenario_risk_report(
+    bonds: list[BondSpec],
+    base_curve: list[CurvePoint],
+    scenario_shifts_bps: dict[str, float],
+) -> list[dict[str, float | str]]:
+    results: list[dict[str, float | str]] = []
+    for scenario_name, shift_bps in scenario_shifts_bps.items():
+        shifted_curve = shift_spot_curve_parallel(base_curve, shift_bps)
+        _, summary = portfolio_risk_report(bonds, shifted_curve)
+        results.append(
+            {
+                "scenario": scenario_name,
+                "curve_shift_bps": float(shift_bps),
+                "total_dv01": float(summary.total_dv01),
+                "krd_2y": float(summary.total_krd_2y),
+                "krd_5y": float(summary.total_krd_5y),
+                "krd_10y": float(summary.total_krd_10y),
+                "krd_30y": float(summary.total_krd_30y),
+            }
+        )
+    return results

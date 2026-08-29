@@ -11,3 +11,4 @@ def test_cli_help() -> None:
     assert "price-bond" in result.stdout
     assert "build-curve" in result.stdout
     assert "risk-report" in result.stdout
+    assert "scenario-risk" in result.stdout

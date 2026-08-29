@@ -18,11 +18,27 @@ from fixed_income_toolkit.io import (
     write_spot_curve_csv,
 )
 from fixed_income_toolkit.pricing import price_bond
-from fixed_income_toolkit.risk import portfolio_risk_report
-from fixed_income_toolkit.types import BondSpec
+from fixed_income_toolkit.risk import portfolio_risk_report, scenario_risk_report
+from fixed_income_toolkit.types import BondSpec, CurvePoint
 
 app = typer.Typer(add_completion=False, help="Fixed income analytics toolkit CLI")
 console = Console()
+
+
+def _read_spot_curve_csv(path: Path) -> list[CurvePoint]:
+    spot_frame = pd.read_csv(path)
+    required = {"tenor_years", "zero_rate", "discount_factor"}
+    if required - set(spot_frame.columns):
+        raise typer.BadParameter("Curve file missing required columns")
+
+    return [
+        CurvePoint(
+            tenor_years=float(row.tenor_years),
+            zero_rate=float(row.zero_rate),
+            discount_factor=float(row.discount_factor),
+        )
+        for row in spot_frame.itertuples(index=False)
+    ]
 
 
 @app.command("price-bond")
@@ -81,22 +97,7 @@ def risk_report_command(
     settlement: str = typer.Option(..., help="Settlement date YYYY-MM-DD"),
     output: Path = typer.Option(...),
 ) -> None:
-    spot_frame = pd.read_csv(curve)
-    required = {"tenor_years", "zero_rate", "discount_factor"}
-    if required - set(spot_frame.columns):
-        raise typer.BadParameter("Curve file missing required columns")
-
-    from fixed_income_toolkit.types import CurvePoint
-
-    curve_points = [
-        CurvePoint(
-            tenor_years=float(row.tenor_years),
-            zero_rate=float(row.zero_rate),
-            discount_factor=float(row.discount_factor),
-        )
-        for row in spot_frame.itertuples(index=False)
-    ]
-
+    curve_points = _read_spot_curve_csv(curve)
     bonds = read_bonds_csv(portfolio, settlement=date.fromisoformat(settlement))
     rows, summary = portfolio_risk_report(bonds, curve_points)
     report_frame = pd.DataFrame(
@@ -118,6 +119,24 @@ def risk_report_command(
         f"KRD(2Y): {summary.total_krd_2y:.6f}, KRD(5Y): {summary.total_krd_5y:.6f}, "
         f"KRD(10Y): {summary.total_krd_10y:.6f}, KRD(30Y): {summary.total_krd_30y:.6f}"
     )
+
+
+@app.command("scenario-risk")
+def scenario_risk_command(
+    portfolio: Path = typer.Option(..., exists=True, readable=True),
+    curve: Path = typer.Option(..., exists=True, readable=True),
+    settlement: str = typer.Option(..., help="Settlement date YYYY-MM-DD"),
+    output: Path = typer.Option(...),
+    shock_bps: float = typer.Option(25.0, help="Parallel shock size in bps for up/down scenarios"),
+) -> None:
+    curve_points = _read_spot_curve_csv(curve)
+    bonds = read_bonds_csv(portfolio, settlement=date.fromisoformat(settlement))
+    scenarios = {"base": 0.0, "up_shock": abs(shock_bps), "down_shock": -abs(shock_bps)}
+    report_frame = pd.DataFrame(scenario_risk_report(bonds, curve_points, scenarios))
+
+    output.parent.mkdir(parents=True, exist_ok=True)
+    report_frame.to_csv(output, index=False)
+    console.print(f"Wrote scenario risk report to {output}")
 
 
 if __name__ == "__main__":
